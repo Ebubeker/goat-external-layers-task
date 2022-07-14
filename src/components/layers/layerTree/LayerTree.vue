@@ -226,7 +226,7 @@ export default {
     }
   },
   methods: {
-    //* Layer Import feature
+    // Layer Import feature
     layerInfoSubmited(data) {
       let resultsfromThis = this.appConfig.layer_groups.map(lay => {
         return Object.keys(lay)[0];
@@ -280,7 +280,7 @@ export default {
         });
     },
 
-    //* XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    // XXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
     /**
      * This function is executed, after the map is bound (see mixins/Mapable)
