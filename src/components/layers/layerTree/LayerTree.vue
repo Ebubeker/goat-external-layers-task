@@ -182,7 +182,7 @@ import InLegend from "../../viewer/ol/controls/InLegend";
 import LayerOrder from "../layerOrder/LayerOrder";
 import StyleDialog from "../changeStyle/StyleDialog";
 import ImportExternalLayers from "../importLayers/ImportExternalLayers";
-//*added by ebubeker
+//added by ebubeker
 import TileLayer from "ol/layer/Tile";
 import TileWMS from "ol/source/TileWMS";
 
