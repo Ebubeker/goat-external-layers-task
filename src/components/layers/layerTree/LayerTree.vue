@@ -6,8 +6,8 @@
         <v-tab-item :eager="true">
           <v-expansion-panels accordion multiple>
             <v-expansion-panel
-              v-for="(layerGroupValue, layerGroupKey) in layerGroups"
-              :key="layerGroupKey"
+              v-for="(layerGroupValue, idx) in layerGroupsArr"
+              :key="idx"
               expand
             >
               <v-expansion-panel-header
@@ -18,12 +18,12 @@
                 <v-layout row wrap align-center>
                   <v-flex xs1>
                     <v-icon small>{{
-                      getLayerGroupIcon(layerGroupKey)
+                      getLayerGroupIcon(layerGroupValue.name)
                     }}</v-icon>
                   </v-flex>
                   <v-flex xs10 class="light-text" style="font-size:medium;">
                     <div>
-                      <b>{{ translate("layerGroup", layerGroupKey) }}</b>
+                      <b>{{ translate("layerGroup", layerGroupValue.name) }}</b>
                     </div>
                   </v-flex>
                   <v-flex xs1>
@@ -35,7 +35,7 @@
                 <!-- LAYERS -->
                 <v-expansion-panels readonly>
                   <v-expansion-panel
-                    v-for="(layer, i) in layerGroupValue"
+                    v-for="(layer, i) in layerGroupValue.children"
                     :key="i"
                     class="layer-row"
                     :class="{
@@ -50,7 +50,10 @@
                             :color="appColor.secondary"
                             :value="layer.getVisible()"
                             @input="
-                              toggleLayerVisibility(layer, layerGroupValue)
+                              toggleLayerVisibility(
+                                layer,
+                                layerGroupValue.children
+                              )
                             "
                           ></v-simple-checkbox>
                         </v-flex>
@@ -58,7 +61,7 @@
                           <h4 class="pl-2">
                             {{ translate("layerName", layer.get("name")) }}
                           </h4>
-                          <b>{{ layer.get("name") }}</b>
+                          <b>{{ i }}</b>
                         </v-flex>
                         <v-flex xs1>
                           <v-icon
@@ -148,6 +151,14 @@
           <v-layout class="mt-5" column align-center>
             <ImportExternalLayers @getLayerInfo="layerInfoSubmited" />
           </v-layout>
+          <v-layout class="mt-5" column align-center>
+            <p>
+              {{
+                layerGroupsArr[4].children[0] &&
+                  layerGroupsArr[4].children[0].get("name")
+              }}
+            </p>
+          </v-layout>
         </v-tab-item>
         <v-tab-item :eager="true">
           <layer-order
@@ -189,7 +200,8 @@ import TileWMS from "ol/source/TileWMS";
 export default {
   mixins: [Mapable, Legend],
   data: () => ({
-    layerGroups: {},
+    // layerGroups: {},
+    layerGroupsArr: [],
     currentItem: null,
     styleDialogKey: 0,
     styleDialogStatus: false
@@ -208,21 +220,15 @@ export default {
     ...mapFields("app", {
       layerTabIndex: "layerTabIndex"
     })
-    // layersChanged() {
-    //   console.log("changed");
-    //   return this.layerGroups;
-    // }
   },
   mounted() {
     EventBus.$on("updateStyleDialogStatusForLayerTree", value => {
       this.styleDialogStatus = value;
     });
   },
-  //watching for changes
   watch: {
-    layerGroups(value) {
-      console.log(this.appConfig);
-      this.layerGroups = value;
+    layerGroupsArr(value) {
+      console.log(value);
     }
   },
   methods: {
@@ -252,32 +258,12 @@ export default {
           attribution: data.title
         }),
         group: "external_imports",
-        name: data.title,
-        displayInLayerList: true
+        name: data.title
       });
 
       this.map.addLayer(newLayer);
 
-      // update layerGroups
-
-      const layerGroups = this.appConfig.layer_groups;
-      layerGroups.reverse().forEach(lg => {
-        const layerGroupName = Object.keys(lg)[0];
-        if (layerGroupName !== "heatmap") {
-          this.layerGroups[layerGroupName] = [];
-        }
-      });
-      this.map
-        .getLayers()
-        .getArray()
-        .forEach(layer => {
-          if (layer.get("group") && layer.get("group") !== "heatmap") {
-            if (!this.layerGroups[layer.get("group")]) {
-              this.layerGroups[layer.get("group")] = [];
-            }
-            this.layerGroups[layer.get("group")].push(layer);
-          }
-        });
+      this.layerGroupsArr[4].children.push(newLayer);
     },
 
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -286,26 +272,39 @@ export default {
      * This function is executed, after the map is bound (see mixins/Mapable)
      * and registers the current map layers.
      */
-
-    onMapBound() {
+    updateLayerGroups() {
       const layerGroups = this.appConfig.layer_groups;
       layerGroups.reverse().forEach(lg => {
         const layerGroupName = Object.keys(lg)[0];
         if (layerGroupName !== "heatmap") {
-          this.layerGroups[layerGroupName] = [];
+          let newObject = {
+            name: layerGroupName,
+            children: []
+          };
+          this.layerGroupsArr.push(newObject);
         }
       });
+      let newObject = {
+        name: "external_imports",
+        children: []
+      };
+      this.layerGroupsArr.push(newObject);
+
       this.map
         .getLayers()
         .getArray()
         .forEach(layer => {
           if (layer.get("group") && layer.get("group") !== "heatmap") {
-            if (!this.layerGroups[layer.get("group")]) {
-              this.layerGroups[layer.get("group")] = [];
-            }
-            this.layerGroups[layer.get("group")].push(layer);
+            this.layerGroupsArr.forEach((lay, idx) => {
+              if (lay.name === layer.get("group")) {
+                this.layerGroupsArr[idx].children.push(layer);
+              }
+            });
           }
         });
+    },
+    onMapBound() {
+      this.updateLayerGroups();
     },
     openStyleDialog(item) {
       //This function is used for opening Style Setting dialog component for a layer
