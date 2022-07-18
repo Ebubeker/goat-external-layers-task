@@ -2,8 +2,8 @@
   <div class="text-center">
     <v-dialog v-model="dialog" width="700">
       <template v-slot:activator="{ on, attrs }">
-        <v-btn color="red lighten-2" dark v-bind="attrs" v-on="on">
-          Click Me
+        <v-btn color="success" dark v-bind="attrs" v-on="on">
+          Import External Layer
         </v-btn>
       </template>
 
@@ -11,7 +11,7 @@
         <v-card-text class="pa-0">
           <h1 class="mb-4">Import a Layer</h1>
           <v-alert v-if="error" type="error">{{ error }}</v-alert>
-          <v-form ref="form" v-model="valid" lazy-validation>
+          <v-form ref="form" lazy-validation>
             <v-text-field
               v-model="url"
               label="Source Url"
